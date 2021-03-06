@@ -16,8 +16,7 @@ import (
 const (
 	qryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
 	qryGetUser    = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id =?;"
-
-	errorNoRows = "no rows in result set"
+	qryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=?, date_created=? WHERE id=?"
 )
 
 func (user *User) Get() *errors.RestErr {
@@ -127,4 +126,26 @@ func (user *User) Save() *errors.RestErr {
 		userDB[user.Id] = user
 		return nil
 	*/
+}
+
+func (user *User) Update() *errors.RestErr {
+	stmt, err := users_db.ClientDb.Prepare(qryUpdateUser)
+	if err != nil {
+		return errors.CustomInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated, user.Id)
+	if err != nil {
+		return mysql_utils.ParseError(err)
+	}
+	return nil
+}
+
+func (user *User) Delete() *errors.RestErr {
+	return nil
+}
+
+func (user *User) Find() *errors.RestErr {
+	return nil
 }

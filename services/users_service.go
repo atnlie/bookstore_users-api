@@ -2,6 +2,7 @@ package services
 
 import (
 	"atnlie/domain/users"
+	"atnlie/utils/date_utils"
 	"atnlie/utils/errors"
 )
 
@@ -30,4 +31,21 @@ func GetUser(userId int64) (*users.User, *errors.RestErr) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func UpdateUser(users users.User) (*users.User, *errors.RestErr) {
+	currentUser, err := GetUser(users.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	currentUser.FirstName = users.FirstName
+	currentUser.LastName = users.LastName
+	currentUser.Email = users.Email
+	currentUser.DateCreated = date_utils.GetNowString()
+
+	if err := currentUser.Update(); err != nil {
+		return nil, err
+	}
+	return currentUser, nil
 }
