@@ -1,6 +1,8 @@
 package users
 
 import (
+	"atnlie/datasources/mysql/users_db"
+	"atnlie/utils/date_utils"
 	"atnlie/utils/errors"
 	"fmt"
 )
@@ -10,8 +12,11 @@ var (
 )
 
 func (user *User) Get() *errors.RestErr {
+	if err := users_db.ClientDb.Ping(); err != nil {
+		panic(err)
+	}
+
 	result := userDB[user.Id]
-	fmt.Println("Result ", result)
 	if result == nil {
 		return errors.CustomNotFoundError(fmt.Sprintf("User %d not found", user.Id))
 	}
@@ -34,6 +39,7 @@ func (user *User) Save() *errors.RestErr {
 		return errors.CustomBadRequestError(fmt.Sprintf("User %d already exist", user.Id))
 	}
 
+	user.DateCreated = date_utils.GetNowString()
 	userDB[user.Id] = user
 	return nil
 }
