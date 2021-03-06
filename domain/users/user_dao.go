@@ -6,11 +6,12 @@ import (
 )
 
 var (
-	userDB = make(map[int64] *User)
+	userDB = make(map[int64]*User)
 )
 
-func (user *User) Save() *errors.RestErr {
+func (user *User) Get() *errors.RestErr {
 	result := userDB[user.Id]
+	fmt.Println("Result ", result)
 	if result == nil {
 		return errors.CustomNotFoundError(fmt.Sprintf("User %d not found", user.Id))
 	}
@@ -24,7 +25,7 @@ func (user *User) Save() *errors.RestErr {
 	return nil
 }
 
-func (user *User) Get() *errors.RestErr {
+func (user *User) Save() *errors.RestErr {
 	currentUser := userDB[user.Id]
 	if currentUser != nil {
 		if currentUser.Email == user.Email {
