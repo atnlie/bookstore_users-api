@@ -23,7 +23,7 @@ func Validate(user *User) *errors.RestErr {
 }
 
 //method
-func (user *User) UserValidation() * errors.RestErr {
+func (user *User) UserValidation() *errors.RestErr {
 	user.Email = strings.TrimSpace(strings.ToLower(user.Email))
 	if user.Email == "" {
 		return errors.CustomBadRequestError("Invalid Email Address")

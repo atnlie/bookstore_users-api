@@ -5,6 +5,7 @@ import (
 	"atnlie/utils/date_utils"
 	"atnlie/utils/errors"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -12,7 +13,9 @@ var (
 )
 
 const (
-	qryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
+	QryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
+	QryGetUser    = "SELECT * FROM users WHERE id ="
+	EmailDuplicate = "Duplicate"
 )
 
 func (user *User) Get() *errors.RestErr {
@@ -35,7 +38,7 @@ func (user *User) Get() *errors.RestErr {
 }
 
 func (user *User) Save() *errors.RestErr {
-	stmt, err := users_db.ClientDb.Prepare(qryInsertUser)
+	stmt, err := users_db.ClientDb.Prepare(QryInsertUser)
 	if err != nil {
 		return errors.CustomInternalServerError(err.Error())
 	}
@@ -51,6 +54,9 @@ func (user *User) Save() *errors.RestErr {
 	user.DateCreated = date_utils.GetNowString()
 	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
 	if err != nil {
+		if strings.Contains(err.Error(), EmailDuplicate) {
+			return errors.CustomBadRequestError(fmt.Sprintf("Email: %s already registered", user.Email))
+		}
 		return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
 	}
 	userId, err := insertResult.LastInsertId()

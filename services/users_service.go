@@ -7,11 +7,11 @@ import (
 
 func CreateUser(user users.User) (*users.User, *errors.RestErr) {
 	/*
-	//call function
-	if err := users.Validate(&user); err != nil {
-		return nil, err
-	}
-	return &user, nil
+		//call function
+		if err := users.Validate(&user); err != nil {
+			return nil, err
+		}
+		return &user, nil
 	*/
 
 	//call methods
