@@ -4,18 +4,20 @@ import (
 	"atnlie/datasources/mysql/users_db"
 	"atnlie/utils/date_utils"
 	"atnlie/utils/errors"
+	"atnlie/utils/mysql_utils"
 	"fmt"
-	"strings"
 )
 
-var (
-	userDB = make(map[int64]*User)
-)
+//user only when you use array mode only
+//var (
+//	userDB = make(map[int64]*User)
+//)
 
 const (
-	qryInsertUser  = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
-	qryGetUser     = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id =?;"
-	emailDuplicate = "Duplicate"
+	qryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
+	qryGetUser    = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id =?;"
+
+	errorNoRows = "no rows in result set"
 )
 
 func (user *User) Get() *errors.RestErr {
@@ -29,14 +31,23 @@ func (user *User) Get() *errors.RestErr {
 	result := stmt.QueryRow(user.Id)
 	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
 		fmt.Println("err -> ", err)
-		return errors.CustomNotFoundError(fmt.Sprintf("User: %d not found", user.Id))
+		return mysql_utils.ParseError(err)
+		//if strings.Contains(err.Error(), errorNoRows) {
+		//	return errors.CustomNotFoundError(fmt.Sprintf("User: %d not found", user.Id))
+		//}
+		//
+		//return errors.CustomInternalServerError(fmt.Sprintf("User: %d not found, %s", user.Id, err.Error()))
 	}
 
-	//user.Id = result.Id
-	//user.FirstName = result.FirstName
-	//user.LastName = result.LastName
-	//user.Email = result.Email
-	//user.DateCreated = result.DateCreated
+	// if you want to use stmt.Query instead dont forget to close manually
+	/*
+		qResult, err := stmt.Query(user.Id)
+		if err != nil {
+			return errors.CustomInternalServerError(fmt.Sprintf("User: %d not found, %s", user.Id, err.Error()))
+		}
+		defer qResult.Close()
+	*/
+
 	return nil
 
 	//this for array mode
@@ -71,16 +82,33 @@ func (user *User) Save() *errors.RestErr {
 		}
 	*/
 	user.DateCreated = date_utils.GetNowString()
-	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
-	if err != nil {
-		if strings.Contains(err.Error(), emailDuplicate) {
-			return errors.CustomBadRequestError(fmt.Sprintf("Email: %s already registered", user.Email))
-		}
-		return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
+	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	if saveErr != nil {
+		return mysql_utils.ParseError(saveErr)
+		////add handle error using mysqlError
+		//sqlErr, ok := saveErr.(*mysql.MySQLError)
+		//if !ok {
+		//	return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", saveErr.Error()))
+		//}
+		//
+		////use sqlErr detect
+		//switch sqlErr.Number {
+		//case 1062: //duplicate
+		//	return errors.CustomBadRequestError(fmt.Sprintf("Email: %s already registered", user.Email))
+		//}
+
+		//instead of use manual check just use detect by mysql error code
+		/*
+			if strings.Contains(saveErr.Error(), errorEmailDuplicate) {
+				return errors.CustomBadRequestError(fmt.Sprintf("Email: %s already registered", user.Email))
+			}
+		*/
+		//return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", saveErr.Error()))
 	}
+
 	userId, err := insertResult.LastInsertId()
 	if err != nil {
-		return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
+		return mysql_utils.ParseError(err)
 	}
 	user.Id = userId
 	return nil
