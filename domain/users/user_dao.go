@@ -11,6 +11,10 @@ var (
 	userDB = make(map[int64]*User)
 )
 
+const (
+	qryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
+)
+
 func (user *User) Get() *errors.RestErr {
 	if err := users_db.ClientDb.Ping(); err != nil {
 		panic(err)
@@ -31,15 +35,43 @@ func (user *User) Get() *errors.RestErr {
 }
 
 func (user *User) Save() *errors.RestErr {
-	currentUser := userDB[user.Id]
-	if currentUser != nil {
-		if currentUser.Email == user.Email {
-			return errors.CustomBadRequestError(fmt.Sprintf("Email %s already registered", user.Email))
-		}
-		return errors.CustomBadRequestError(fmt.Sprintf("User %d already exist", user.Id))
+	stmt, err := users_db.ClientDb.Prepare(qryInsertUser)
+	if err != nil {
+		return errors.CustomInternalServerError(err.Error())
 	}
-
+	//this for db mode
+	defer stmt.Close()
+	//fast way with one line code
+	/*
+		result, err := users_db.ClientDb.Exec(qryInsertUser, user.FirstName, user.LastName, user.Email, user.DateCreated)
+		if err != nil {
+			return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
+		}
+	*/
 	user.DateCreated = date_utils.GetNowString()
-	userDB[user.Id] = user
+	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	if err != nil {
+		return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
+	}
+	userId, err := insertResult.LastInsertId()
+	if err != nil {
+		return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
+	}
+	user.Id = userId
 	return nil
+
+	//this for array mode
+	/*
+		currentUser := userDB[user.Id]
+		if currentUser != nil {
+			if currentUser.Email == user.Email {
+				return errors.CustomBadRequestError(fmt.Sprintf("Email %s already registered", user.Email))
+			}
+			return errors.CustomBadRequestError(fmt.Sprintf("User %d already exist", user.Id))
+		}
+
+		user.DateCreated = date_utils.GetNowString()
+		userDB[user.Id] = user
+		return nil
+	*/
 }
