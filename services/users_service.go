@@ -33,15 +33,34 @@ func GetUser(userId int64) (*users.User, *errors.RestErr) {
 	return result, nil
 }
 
-func UpdateUser(users users.User) (*users.User, *errors.RestErr) {
+func UpdateUser(isPartial bool, users users.User) (*users.User, *errors.RestErr) {
 	currentUser, err := GetUser(users.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	currentUser.FirstName = users.FirstName
-	currentUser.LastName = users.LastName
-	currentUser.Email = users.Email
+	if err := users.UserValidation(); err != nil {
+		return nil, err
+	}
+
+	if isPartial {
+		if users.FirstName != "" {
+			currentUser.FirstName = users.FirstName
+		}
+
+		if users.LastName != "" {
+			currentUser.LastName = users.LastName
+		}
+
+		if users.Email != "" {
+			currentUser.Email = users.Email
+		}
+	} else {
+		currentUser.FirstName = users.FirstName
+		currentUser.LastName = users.LastName
+		currentUser.Email = users.Email
+	}
+	//always update date created otherwise make new field to store update date
 	currentUser.DateCreated = date_utils.GetNowString()
 
 	if err := currentUser.Update(); err != nil {
