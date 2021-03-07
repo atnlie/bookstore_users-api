@@ -14,10 +14,11 @@ import (
 //)
 
 const (
-	qryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
-	qryGetUser    = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id =?;"
-	qryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=?, date_created=? WHERE id=?"
-	qryDeleteUser = "DELETE FROM users WHERE id=?"
+	qryInsertUser   = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
+	qryGetUser      = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id=?;"
+	qryUpdateUser   = "UPDATE users SET first_name=?, last_name=?, email=?, date_created=? WHERE id=?;"
+	qryDeleteUser   = "DELETE FROM users WHERE id=?;"
+	qryFindByStatus = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE status=?;"
 )
 
 func (user *User) Get() *errors.RestErr {
@@ -156,6 +157,29 @@ func (user *User) Delete() *errors.RestErr {
 	return nil
 }
 
-func (user *User) Find() *errors.RestErr {
-	return nil
+func (user *User) FindByStatus(status string) ([]User, *errors.RestErr) {
+	stmt, err := users_db.ClientDb.Prepare(qryFindByStatus)
+	if err != nil {
+		return nil, errors.CustomInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(status)
+	if err != nil {
+		return nil, errors.CustomInternalServerError(err.Error())
+	}
+	defer rows.Close()
+
+	result := make([]User, 0)
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status); err != nil {
+			return nil, mysql_utils.ParseError(err)
+		}
+		result = append(result, user)
+	}
+	if len(result) == 0 {
+		return nil, errors.CustomNotFoundError(fmt.Sprintf("no users matching status: %s", status))
+	}
+	return result, nil
 }
