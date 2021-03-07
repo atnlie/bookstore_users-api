@@ -10,24 +10,32 @@ import (
 	"strconv"
 )
 
+func getUserId(userIdParam string) (int64, *errors.RestErr) {
+	userId, userErr := strconv.ParseInt(userIdParam, 10, 64)
+	if userErr != nil {
+		return 0, errors.CustomBadRequestError("user id should a number")
+	}
+	return userId, nil
+}
+
 func CreateUser(c *gin.Context) {
 	var user users.User
 	/*
-	bytes, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		//TODO: Handle error
-		fmt.Println("err -> ", err.Error())
-		return
-	}
-	if err := json.Unmarshal(bytes, &user); err != nil {
-		//TODO: Handle json error
-		fmt.Println("err -> ", err.Error())
-		return
-	}
+		bytes, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			//TODO: Handle error
+			fmt.Println("err -> ", err.Error())
+			return
+		}
+		if err := json.Unmarshal(bytes, &user); err != nil {
+			//TODO: Handle json error
+			fmt.Println("err -> ", err.Error())
+			return
+		}
 
-	fmt.Println("user: ", user)
-	fmt.Println("bytes:", string(bytes))
-	fmt.Println("err: ", saveErr)
+		fmt.Println("user: ", user)
+		fmt.Println("bytes:", string(bytes))
+		fmt.Println("err: ", saveErr)
 
 	*/
 	//simplify with this
@@ -55,10 +63,15 @@ func CreateUser(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	//userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	//if userErr != nil {
+	//	err := errors.CustomBadRequestError("user_id should a number")
+	//	c.JSON(err.Status, err)
+	//	return
+	//}
+	userId, userErr := getUserId(c.Param("user_id"))
 	if userErr != nil {
-		err := errors.CustomBadRequestError("user_id should a number")
-		c.JSON(err.Status, err)
+		c.JSON(userErr.Status, userErr)
 		return
 	}
 
@@ -71,10 +84,16 @@ func GetUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
-	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	//userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	//if userErr != nil {
+	//	err := errors.CustomBadRequestError("user_id should a number")
+	//	c.JSON(err.Status, err)
+	//	return
+	//}
+
+	userId, userErr := getUserId(c.Param("user_id"))
 	if userErr != nil {
-		err := errors.CustomBadRequestError("user_id should a number")
-		c.JSON(err.Status, err)
+		c.JSON(userErr.Status, userErr)
 		return
 	}
 
@@ -95,4 +114,19 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
+}
+
+func DeleteUser(c *gin.Context) {
+	userId, idErr := getUserId(c.Param("user_id"))
+	if idErr != nil {
+		c.JSON(idErr.Status, idErr)
+		return
+	}
+	fmt.Println("userId: ", userId)
+
+	if err := services.DeleteUser(userId); err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
 }

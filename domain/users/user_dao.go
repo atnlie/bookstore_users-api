@@ -17,6 +17,7 @@ const (
 	qryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
 	qryGetUser    = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id =?;"
 	qryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=?, date_created=? WHERE id=?"
+	qryDeleteUser = "DELETE FROM users WHERE id=?"
 )
 
 func (user *User) Get() *errors.RestErr {
@@ -143,6 +144,15 @@ func (user *User) Update() *errors.RestErr {
 }
 
 func (user *User) Delete() *errors.RestErr {
+	stmt, err := users_db.ClientDb.Prepare(qryDeleteUser)
+	if err != nil {
+		return errors.CustomInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+
+	if _, err = stmt.Exec(user.Id); err != nil {
+		return errors.CustomInternalServerError(err.Error())
+	}
 	return nil
 }
 
