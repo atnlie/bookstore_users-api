@@ -4,6 +4,7 @@ import (
 	"atnlie/domain/users"
 	"atnlie/utils/date_utils"
 	"atnlie/utils/errors"
+	"atnlie/utils/crypto_utils"
 )
 
 func CreateUser(user users.User) (*users.User, *errors.RestErr) {
@@ -19,6 +20,11 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr) {
 	if err := user.UserValidation(); err != nil {
 		return nil, err
 	}
+
+	//user.Status = user.StatusActive
+	user.DateCreated = date_utils.GetNowDBFormat()
+	user.Password = crypto_utils.GetMD5(user.Password)
+
 	if err := user.Save(); err != nil {
 		return nil, err
 	}
@@ -74,7 +80,7 @@ func DeleteUser(userId int64) *errors.RestErr {
 	return currentUser.Delete()
 }
 
-func SearchUser(status string) ([]users.User, *errors.RestErr) {
+func SearchUser(status string) (users.Users, *errors.RestErr) {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
 }

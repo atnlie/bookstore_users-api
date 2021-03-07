@@ -2,7 +2,6 @@ package users
 
 import (
 	"atnlie/datasources/mysql/users_db"
-	"atnlie/utils/date_utils"
 	"atnlie/utils/errors"
 	"atnlie/utils/mysql_utils"
 	"fmt"
@@ -84,8 +83,7 @@ func (user *User) Save() *errors.RestErr {
 			return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
 		}
 	*/
-	fmt.Println("user.Status: ", user.Status)
-	user.DateCreated = date_utils.GetNowString()
+
 	insertResult, saveErr := stmt.Exec(
 		user.FirstName, user.LastName, user.Email, user.DateCreated, user.Status, user.Password)
 	if saveErr != nil {
