@@ -21,6 +21,8 @@ func ParseError(err error) *errors.RestErr  {
 	switch sqlErr.Number {
 	case 1062:
 		return errors.CustomBadRequestError("invalid data")
+	case 1364:
+		return errors.CustomBadRequestError("field does not have a default value")
 	}
 	return errors.CustomInternalServerError("error parsing process")
 }

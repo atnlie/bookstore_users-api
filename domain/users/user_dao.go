@@ -14,8 +14,9 @@ import (
 //)
 
 const (
-	qryInsertUser   = "INSERT INTO users(first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);"
-	qryGetUser      = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id=?;"
+	qryInsertUser   = "INSERT INTO users(first_name, last_name, email, date_created, status, password) " +
+		"VALUES (?, ?, ?, ?, ?, ?);"
+	qryGetUser      = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE id=?;"
 	qryUpdateUser   = "UPDATE users SET first_name=?, last_name=?, email=?, date_created=? WHERE id=?;"
 	qryDeleteUser   = "DELETE FROM users WHERE id=?;"
 	qryFindByStatus = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE status=?;"
@@ -30,7 +31,8 @@ func (user *User) Get() *errors.RestErr {
 	defer stmt.Close()
 
 	result := stmt.QueryRow(user.Id)
-	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
+	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status);
+		err != nil {
 		fmt.Println("err -> ", err)
 		return mysql_utils.ParseError(err)
 		//if strings.Contains(err.Error(), errorNoRows) {
@@ -82,9 +84,12 @@ func (user *User) Save() *errors.RestErr {
 			return errors.CustomInternalServerError(fmt.Sprintf("Error when trying to save user: %s", err.Error()))
 		}
 	*/
+	fmt.Println("user.Status: ", user.Status)
 	user.DateCreated = date_utils.GetNowString()
-	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	insertResult, saveErr := stmt.Exec(
+		user.FirstName, user.LastName, user.Email, user.DateCreated, user.Status, user.Password)
 	if saveErr != nil {
+		fmt.Println("err ", saveErr)
 		return mysql_utils.ParseError(saveErr)
 		////add handle error using mysqlError
 		//sqlErr, ok := saveErr.(*mysql.MySQLError)
