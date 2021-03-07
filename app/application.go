@@ -1,6 +1,7 @@
 package app
 
 import (
+	"atnlie/logger"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +12,12 @@ var (
 )
 
 func StartApplication() {
+	//map all router
 	mapUrls()
+
+	//init logger
+	logger.Info("about to start the user-api service")
+
 	router.Run(":8080")
 }
 

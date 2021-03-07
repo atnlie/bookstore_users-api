@@ -52,7 +52,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	result, saveErr := services.CreateUser(user)
+	result, saveErr := services.UserService.CreateUser(user)
 	if saveErr != nil {
 		//TODO: handle user creation error
 		c.JSON(saveErr.Status, saveErr)
@@ -75,7 +75,7 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	user, getErr := services.GetUser(userId)
+	user, getErr := services.UserService.GetUser(userId)
 	if getErr != nil {
 		c.JSON(getErr.Status, getErr)
 		return
@@ -108,7 +108,7 @@ func UpdateUser(c *gin.Context) {
 
 	isPartial := c.Request.Method == http.MethodPatch
 
-	result, err := services.UpdateUser(isPartial, user)
+	result, err := services.UserService.UpdateUser(isPartial, user)
 	if err != nil {
 		c.JSON(err.Status, err)
 		return
@@ -124,7 +124,7 @@ func DeleteUser(c *gin.Context) {
 	}
 	fmt.Println("userId: ", userId)
 
-	if err := services.DeleteUser(userId); err != nil {
+	if err := services.UserService.DeleteUser(userId); err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
@@ -134,7 +134,7 @@ func DeleteUser(c *gin.Context) {
 func SearchUser(c *gin.Context) {
 	status := c.Query("status")
 
-	users, err := services.SearchUser(status)
+	users, err := services.UserService.SearchUser(status)
 	if err != nil {
 		c.JSON(err.Status, err)
 		return

@@ -10,7 +10,7 @@ const (
 	errorNoRows = "no rows in result set"
 )
 
-func ParseError(err error) *errors.RestErr  {
+func ParseError(err error) *errors.RestErr {
 	sqlErr, ok := err.(*mysql.MySQLError)
 	if !ok {
 		if strings.Contains(err.Error(), errorNoRows) {
@@ -23,6 +23,8 @@ func ParseError(err error) *errors.RestErr  {
 		return errors.CustomBadRequestError("invalid data")
 	case 1364:
 		return errors.CustomBadRequestError("field does not have a default value")
+	case 1064:
+		return errors.CustomBadRequestError("SQL Syntax is error")
 	}
 	return errors.CustomInternalServerError("error parsing process")
 }

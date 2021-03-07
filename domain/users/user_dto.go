@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+const (
+	StatusActive   = "active"
+	StatusDeActive = "deactive"
+)
+
 type User struct {
 	Id          int64  `json:"id"`
 	FirstName   string `json:"first_name"`
@@ -16,11 +21,6 @@ type User struct {
 }
 
 type Users []User
-
-const (
-	StatusActive   = "active"
-	StatusDeactive = "deactive"
-)
 
 //function
 func Validate(user *User) *errors.RestErr {
@@ -39,7 +39,6 @@ func (user *User) UserValidation() *errors.RestErr {
 	}
 
 	user.Password = strings.TrimSpace(user.Password)
-	println("pass ", user.Password)
 	if user.Password == "" {
 		return errors.CustomBadRequestError("Invalid Password")
 	}
